@@ -7,5 +7,6 @@
 .env
 .vscode/
 
+tests/*/mysql/data
 tests/*/postgresql/data
 tests/*/airflow/logs
