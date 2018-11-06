@@ -1,4 +1,5 @@
 from sqlalchemy import func
+from sqlalchemy.sql.expression import _literal_as_text
 
 from flask import Response
 from flask_admin import BaseView, expose
@@ -63,7 +64,11 @@ def get_dag_duration_info():
     '''get duration of currently running DagRuns
     :return dag_info
     '''
-    duration = func.sum(func.now() - DagRun.start_date)
+
+    if Session.bind.dialect.name == 'mysql':
+        duration = func.timestampdiff(_literal_as_text("SECOND"), DagRun.start_date, func.now())
+    else:
+        duration = func.sum(func.now() - DagRun.start_date)
 
     with session_scope(Session) as session:
         return session.query(
@@ -112,7 +117,10 @@ class MetricsCollector(object):
             labels=['dag_id', 'run_id']
         )
         for dag in get_dag_duration_info():
-            dag_duration.add_metric([dag.dag_id, dag.run_id], dag.duration.seconds)
+            if Session.bind.dialect.name == 'mysql':
+                dag_duration.add_metric([dag.dag_id, dag.run_id], dag.duration)
+            else:
+                dag_duration.add_metric([dag.dag_id, dag.run_id], dag.duration.seconds)
         yield dag_duration
 
 
