@@ -1,4 +1,4 @@
-FROM puckel/docker-airflow:1.8.1
+FROM puckel/docker-airflow:${version:-1.8.1}
 
 USER root
 
