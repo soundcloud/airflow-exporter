@@ -10,8 +10,8 @@ from airflow.models import DagStat, TaskInstance, DagModel, DagRun
 from airflow.utils.state import State
 
 # Importing base classes that we need to derive
-from prometheus_client import generate_latest, REGISTRY
-from prometheus_client.core import GaugeMetricFamily
+from prometheus_client import generate_latest
+from prometheus_client.core import GaugeMetricFamily, CollectorRegistry
 
 from contextlib import contextmanager
 
@@ -124,8 +124,8 @@ class MetricsCollector(object):
         yield dag_duration
 
 
+REGISTRY = CollectorRegistry(auto_describe=False)
 REGISTRY.register(MetricsCollector())
-
 
 class Metrics(BaseView):
     @expose('/')
