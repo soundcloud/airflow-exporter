@@ -16,6 +16,12 @@ from prometheus_client.core import GaugeMetricFamily, CollectorRegistry
 from contextlib import contextmanager
 
 
+from airflow import configuration
+from airflow.utils.log.logging_mixin import LoggingMixin
+
+log = LoggingMixin().log
+
+
 @contextmanager
 def session_scope(session):
     """
@@ -88,6 +94,8 @@ class MetricsCollector(object):
     def collect(self):
         '''collect metrics'''
 
+        log.info('PrometheusExporter running collection')
+
         # Task metrics
         task_info = get_task_state_info()
         t_state = GaugeMetricFamily(
@@ -124,7 +132,9 @@ class MetricsCollector(object):
         yield dag_duration
 
 
-REGISTRY = CollectorRegistry(auto_describe=False)
+log.info('Disabling auto_describe on Prometheus Registry')
+REGISTRY._auto_describe = False
+log.info('Registering PrometheusExporter MetricsCollector')
 REGISTRY.register(MetricsCollector())
 
 class Metrics(BaseView):
