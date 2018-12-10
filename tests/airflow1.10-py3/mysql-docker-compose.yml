@@ -1,0 +1,39 @@
+version: '2'
+
+services:
+
+    exporter_mysql:
+        image: percona:5.6.39
+        container_name: exporter_mysql
+        restart: always
+        environment:
+          MYSQL_ROOT_PASSWORD: "rootroot"
+        volumes:
+            - ./mysql/data:/var/lib/mysql/
+            - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d/
+            - ./mysql/conf:/etc/mysql/conf.d/
+        ports:
+            - "3306:3306"
+
+    exporter_airflow:
+        image: exporter_airflow_mysql
+        build: ./airflow/build/
+        container_name: exporter_airflow
+        restart: always
+        environment:
+            - DB_TYPE=mysql
+            - AIRFLOW__CORE__FERNET_KEY=EpK7iMi1OPb37q2LWC94CA8TJzx_WtJ4f_ODlkFatNc=
+            - LOAD_EX=n
+            - EXECUTOR=Local
+            - MYSQL_HOST=exporter_mysql
+            - MYSQL_PORT=3306
+            - MYSQL_USER=airflow
+            - MYSQL_PASSWORD=airflowpass
+            - MYSQL_DB=airflow
+        volumes:
+            - ../dags:/usr/local/airflow/dags
+            - ../..:/usr/local/airflow/plugins/airflow-exporter-0.000
+            - ./airflow/logs:/usr/local/airflow/logs
+        ports:
+            - "8080:8080"
+        command: webserver
